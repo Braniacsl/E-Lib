@@ -1,0 +1,73 @@
+databases:
+  - name: elib-db
+    plan: free # or starter
+    databaseName: elib-db
+    user: library_user
+
+services:
+  # 1. RabbitMQ (Private Service - Internal Only)
+  - type: pserv
+    name: rabbitmq
+    env: docker
+    # Use the official image directly
+    image: rabbitmq:3-management
+    plan: free # restricted usage, upgrade for prod
+    envVars:
+      - key: RABBITMQ_DEFAULT_USER
+        value: user
+      - key: RABBITMQ_DEFAULT_PASS
+        value: password
+
+  # 2. Backend (Spring Boot)
+  - type: web
+    name: elib-backend
+    env: docker
+    dockerContext: ./backend # Point to the backend folder
+    plan: free
+    dependsOn:
+      - library-db
+      - rabbitmq
+    envVars:
+      # Connect to the Managed Postgres
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: elib-db
+          property: connectionString
+      # Note: Render connection strings are "postgres://", Spring needs "jdbc:postgresql://"
+      # You might need a small config class to parse this, or set parts manually:
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: elib-db
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: elib-db
+          property: password
+      - key: SPRING_DATASOURCE_HOST
+        fromDatabase:
+          name: elib-db
+          property: host
+
+      # Connect to RabbitMQ (Internal Hostname)
+      - key: SPRING_RABBITMQ_HOST
+        value: rabbitmq
+      - key: SPRING_RABBITMQ_USERNAME
+        value: user
+      - key: SPRING_RABBITMQ_PASSWORD
+        value: password
+
+  # 3. Frontend (React + Nginx)
+  - type: web
+    name: elib-frontend
+    env: docker
+    dockerContext: ./frontend # Point to the frontend folder
+    plan: free
+    dependsOn:
+      - elib-backend
+    # If your frontend needs to know the backend URL at build time:
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: elib-backend
+          property: url

@@ -1,0 +1,72 @@
+services:
+  gateway:
+    build:
+      context: ./backend
+      target: gateway
+    restart: always
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/elib_db
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_RABBITMQ_HOST: rabbitmq
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://gateway:8761/eureka
+    depends_on:
+      - postgres
+      - rabbitmq
+    networks:
+      - app-network
+    ports:
+      - "8080:8080"
+
+  core:
+    build:
+      context: ./backend
+      target: core
+    restart: always
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/elib_db
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_RABBITMQ_HOST: rabbitmq
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://gateway:8761/eureka
+    depends_on:
+      - postgres
+      - rabbitmq
+      - gateway
+    networks:
+      - app-network
+    ports:
+      - "8081:8081"
+
+  notifications:
+    build:
+      context: ./backend
+      target: notifications
+    restart: always
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_MAIL_HOST: smtp.gmail.com
+      SPRING_MAIL_PORT: 587
+      SPRING_MAIL_USERNAME: ${MAIL_USERNAME}
+      SPRING_MAIL_PASSWORD: ${MAIL_PASSWORD}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://gateway:8761/eureka
+    depends_on:
+      - rabbitmq
+      - gateway
+    networks:
+      - app-network
+    ports:
+      - "8082:8082"
+
+  frontend:
+    build: ./frontend
+    restart: always
+    depends_on:
+      - gateway
+    networks:
+      - app-network
+    ports:
+      - "80:80"

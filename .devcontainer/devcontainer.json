@@ -1,0 +1,44 @@
+{
+  "name": "E-Lib Dev Env",
+
+  "dockerComposeFile": [
+    "../docker-compose.yml",
+    "../docker-compose.dev.yml"
+  ],
+  "service": "devbox",
+  "workspaceFolder": "/workspace",
+
+  "features": {
+    "ghcr.io/devcontainers/features/java:1": {
+        "version": "21",
+        "installMaven": "true",
+        "mavenVersion": "latest"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts"
+    },
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "version": "latest",
+      "enableNonRootDocker": "true",
+      "moby": "true"
+    }
+  },
+
+  "customizations": {
+    "jetbrains": {
+      "backend": "IntelliJ IDEA Ultimate"
+    },
+    "vscode": {
+      "extensions": [
+        "vscjava.vscode-java-pack",
+        "esbenp.prettier-vscode",
+        "redhat.vscode-yaml",
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  },
+
+  "forwardPorts": [8080, 8081, 8082, 3000, 5005, 5432, 15672],
+
+  "remoteUser": "vscode",
+}

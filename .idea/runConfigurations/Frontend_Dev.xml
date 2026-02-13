@@ -1,0 +1,19 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Frontend Dev" type="js.build_tools.npm">
+    <package-json value="$PROJECT_DIR$/frontend/package.json" />
+    <command value="run" />
+    <scripts>
+      <script value="dev" />
+    </scripts>
+    <node-interpreter value="$PROJECT_DIR$/../usr/local/share/nvm/current/bin/node" />
+    <package-manager value="$PROJECT_DIR$/../usr/local/share/nvm/current/bin/npm" />
+    <envs>
+      <env name="VITE_API_BASE_URL" value="http://localhost:8080" />
+      <env name="PATH" value="/usr/local/share/nvm/current/bin:/usr/local/bin:/usr/bin:/bin" />
+    </envs>
+    <EXTENSION ID="com.intellij.javascript.debugger.execution.StartBrowserRunConfigurationExtension">
+      <browser with-js-debugger="true" />
+    </EXTENSION>
+    <method v="2" />
+  </configuration>
+</component>
