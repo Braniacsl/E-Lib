@@ -3,15 +3,18 @@ services:
     image: postgres:15-alpine
     restart: always
     environment:
-      POSTGRES_DB: elib_db
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
     networks:
       - app-network
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./backend/docker/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U user -d elib_db" ]
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -21,8 +24,8 @@ services:
     image: rabbitmq:3-management-alpine
     restart: always
     ports:
-      - "5672:5672" # AMQP protocol
-      - "15672:15672" # Management UI
+      - "5672:5672"
+      - "15672:15672"
     networks:
       - app-network
 

@@ -38,11 +38,11 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
             try {
                 Claims claims = validateToken(token);
 
-                // Add user info to request headers for downstream services
                 ServerWebExchange mutatedExchange = exchange.mutate()
                         .request(builder -> builder
                                 .header("X-User-Id", claims.getSubject())
                                 .header("X-User-Roles", claims.get("roles", String.class))
+                                .header("X-User-Email", claims.getSubject())
                         )
                         .build();
 
@@ -54,12 +54,22 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
     }
 
     private Claims validateToken(String token) {
-        SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+        SecretKey key = Keys.hmacShaKeyFor(hexStringToByteArray(jwtSecret));
         return Jwts.parser()
                 .verifyWith(key)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+    }
+
+    private byte[] hexStringToByteArray(String hex) {
+        int len = hex.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(hex.charAt(i), 16) << 4)
+                + Character.digit(hex.charAt(i + 1), 16));
+        }
+        return data;
     }
 
     private Mono<Void> unauthorized(ServerWebExchange exchange, String message) {

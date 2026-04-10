@@ -1,19 +1,20 @@
 # IDE
-.idea/workspace.xml
-.idea/shelf/
-.idea/tasks.xml
-.idea/datasources.xml
-.idea/dataSources.ids
-.idea/sqlDataSources.xml
-.idea/dynamic.xml
-.idea/uiDesigner.xml
-.idea/*.iml
-.idea/modules.xml
-.idea/gradle.xml
-.idea/compiler.xml
-.idea/libraries/
-.idea/caches/
-.idea/.name
+.idea/
+*.iml
+
+# Agent tooling
+.claude/
+.engram/
+.mcp.json
+.obsidian/
+
+# Local dev environment
+.envrc
+
+# Root-level temp files
+/*.pdf
+/*.docx
+/*.csv
 
 # OS
 .DS_Store
