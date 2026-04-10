@@ -16,6 +16,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.elib.core.dto.StockResponse;
 
 import java.util.List;
 
@@ -122,6 +123,27 @@ public class BookController {
     })
     public ResponseEntity<BookResponse> returnBook(@PathVariable Long id) {
         BookResponse response = bookService.returnBook(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}/availability")
+    @Operation(summary = "Check book stock availability")
+    public ResponseEntity<StockResponse> checkAvailability(@PathVariable Long id) {
+        StockResponse response = bookService.checkAvailability(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{id}/decrement-stock")
+    @Operation(summary = "Decrement book stock")
+    public ResponseEntity<StockResponse> decrementStock(@PathVariable Long id) {
+        StockResponse response = bookService.decrementStock(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{id}/increment-stock")
+    @Operation(summary = "Increment book stock")
+    public ResponseEntity<StockResponse> incrementStock(@PathVariable Long id) {
+        StockResponse response = bookService.incrementStock(id);
         return ResponseEntity.ok(response);
     }
 }

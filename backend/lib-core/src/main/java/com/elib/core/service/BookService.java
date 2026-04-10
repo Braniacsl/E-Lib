@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.elib.core.dto.StockResponse;
 
 import java.util.List;
 
@@ -160,5 +161,58 @@ public class BookService {
         if (availableCopies > totalCopies) {
             throw new IllegalArgumentException("Available copies cannot exceed total copies");
         }
+    }
+
+    @Transactional(readOnly = true)
+    public StockResponse checkAvailability(Long bookId) {
+        Book book = bookRepository.findByIdAndIsActiveTrue(bookId)
+                .orElseThrow(() -> new ResourceNotFoundException("Active book not found with ID: " + bookId));
+
+        return new StockResponse(
+                book.getId(),
+                book.getAvailableCopies(),
+                book.getTotalCopies(),
+                book.getAvailableCopies() > 0
+        );
+    }
+
+    @Transactional
+    public StockResponse decrementStock(Long bookId) {
+        Book book = bookRepository.findByIdAndIsActiveTrue(bookId)
+                .orElseThrow(() -> new ResourceNotFoundException("Active book not found with ID: " + bookId));
+
+        if (book.getAvailableCopies() <= 0) {
+            throw new IllegalStateException("No stock available for book ID: " + bookId);
+        }
+
+        book.setAvailableCopies(book.getAvailableCopies() - 1);
+        Book updatedBook = bookRepository.save(book);
+
+        return new StockResponse(
+                updatedBook.getId(),
+                updatedBook.getAvailableCopies(),
+                updatedBook.getTotalCopies(),
+                updatedBook.getAvailableCopies() > 0
+        );
+    }
+
+    @Transactional
+    public StockResponse incrementStock(Long bookId) {
+        Book book = bookRepository.findByIdAndIsActiveTrue(bookId)
+                .orElseThrow(() -> new ResourceNotFoundException("Active book not found with ID: " + bookId));
+
+        if (book.getAvailableCopies() >= book.getTotalCopies()) {
+            throw new IllegalStateException("Stock is already at maximum for book ID: " + bookId);
+        }
+
+        book.setAvailableCopies(book.getAvailableCopies() + 1);
+        Book updatedBook = bookRepository.save(book);
+
+        return new StockResponse(
+                updatedBook.getId(),
+                updatedBook.getAvailableCopies(),
+                updatedBook.getTotalCopies(),
+                updatedBook.getAvailableCopies() > 0
+        );
     }
 }
