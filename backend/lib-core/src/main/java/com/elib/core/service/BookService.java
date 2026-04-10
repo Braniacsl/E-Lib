@@ -2,6 +2,7 @@ package com.elib.core.service;
 
 import com.elib.core.dto.BookRequest;
 import com.elib.core.dto.BookResponse;
+import com.elib.core.dto.StockResponse;
 import com.elib.core.entity.Book;
 import com.elib.core.exception.ResourceNotFoundException;
 import com.elib.core.mapper.BookMapper;
@@ -12,9 +13,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.elib.core.dto.StockResponse;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -69,13 +67,13 @@ public class BookService {
                     });
         }
 
+        validateCopies(request.totalCopies(), book.getAvailableCopies());
+
         bookMapper.updateEntityFromRequest(request, book);
 
         if (book.getAvailableCopies() > book.getTotalCopies()) {
             book.setAvailableCopies(book.getTotalCopies());
         }
-
-        validateCopies(book.getTotalCopies(), book.getAvailableCopies());
 
         Book updatedBook = bookRepository.save(book);
 
@@ -94,73 +92,6 @@ public class BookService {
         bookRepository.save(book);
 
         log.info("Book soft-deleted with ID: {}", id);
-    }
-
-    @Transactional(readOnly = true)
-    public Page<BookResponse> searchBooks(String query, Pageable pageable) {
-        log.debug("Searching books with query: {}", query);
-        return bookRepository.searchBooks(query, pageable)
-                .map(bookMapper::toResponse);
-    }
-
-    @Transactional(readOnly = true)
-    public List<String> getAllCategories() {
-        log.debug("Fetching all distinct book categories");
-        return bookRepository.findAllDistinctCategories();
-    }
-
-    @Transactional
-    public BookResponse borrowBook(Long bookId) {
-        log.info("Borrowing book with ID: {}", bookId);
-
-        Book book = bookRepository.findByIdAndIsActiveTrue(bookId)
-                .orElseThrow(() -> new ResourceNotFoundException("Active book not found with ID: " + bookId));
-
-        if (book.getAvailableCopies() <= 0) {
-            throw new IllegalStateException("No copies available for book ID: " + bookId);
-        }
-
-        book.setAvailableCopies(book.getAvailableCopies() - 1);
-        Book updatedBook = bookRepository.save(book);
-
-        log.info("Book borrowed successfully with ID: {}, available copies now: {}",
-                bookId, updatedBook.getAvailableCopies());
-
-        return bookMapper.toResponse(updatedBook);
-    }
-
-    @Transactional
-    public BookResponse returnBook(Long bookId) {
-        log.info("Returning book with ID: {}", bookId);
-
-        Book book = bookRepository.findByIdAndIsActiveTrue(bookId)
-                .orElseThrow(() -> new ResourceNotFoundException("Active book not found with ID: " + bookId));
-
-        if (book.getAvailableCopies() >= book.getTotalCopies()) {
-            throw new IllegalStateException("All copies are already available for book ID: " + bookId);
-        }
-
-        book.setAvailableCopies(book.getAvailableCopies() + 1);
-        Book updatedBook = bookRepository.save(book);
-
-        log.info("Book returned successfully with ID: {}, available copies now: {}",
-                bookId, updatedBook.getAvailableCopies());
-
-        return bookMapper.toResponse(updatedBook);
-    }
-
-    private void validateCopies(Integer totalCopies, Integer availableCopies) {
-        if (totalCopies == null || totalCopies < 0) {
-            throw new IllegalArgumentException("Total copies must be zero or greater");
-        }
-
-        if (availableCopies == null || availableCopies < 0) {
-            throw new IllegalArgumentException("Available copies must be zero or greater");
-        }
-
-        if (availableCopies > totalCopies) {
-            throw new IllegalArgumentException("Available copies cannot exceed total copies");
-        }
     }
 
     @Transactional(readOnly = true)
@@ -214,5 +145,67 @@ public class BookService {
                 updatedBook.getTotalCopies(),
                 updatedBook.getAvailableCopies() > 0
         );
+    }
+
+    @Transactional
+    public BookResponse borrowBook(Long bookId) {
+        log.info("Borrowing book with ID: {}", bookId);
+
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
+
+        if (!Boolean.TRUE.equals(book.getIsActive())) {
+            throw new IllegalStateException("Cannot borrow an inactive book");
+        }
+
+        if (book.getAvailableCopies() <= 0) {
+            throw new IllegalStateException("No copies available for book ID: " + bookId);
+        }
+
+        book.setAvailableCopies(book.getAvailableCopies() - 1);
+        Book updatedBook = bookRepository.save(book);
+
+        log.info("Book borrowed successfully with ID: {}, available copies now: {}",
+                bookId, updatedBook.getAvailableCopies());
+
+        return bookMapper.toResponse(updatedBook);
+    }
+
+    @Transactional
+    public BookResponse returnBook(Long bookId) {
+        log.info("Returning book with ID: {}", bookId);
+
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
+
+        if (!Boolean.TRUE.equals(book.getIsActive())) {
+            throw new IllegalStateException("Cannot return an inactive book");
+        }
+
+        if (book.getAvailableCopies() >= book.getTotalCopies()) {
+            throw new IllegalStateException("All copies are already available for book ID: " + bookId);
+        }
+
+        book.setAvailableCopies(book.getAvailableCopies() + 1);
+        Book updatedBook = bookRepository.save(book);
+
+        log.info("Book returned successfully with ID: {}, available copies now: {}",
+                bookId, updatedBook.getAvailableCopies());
+
+        return bookMapper.toResponse(updatedBook);
+    }
+
+    private void validateCopies(Integer totalCopies, Integer availableCopies) {
+        if (totalCopies == null || totalCopies < 0) {
+            throw new IllegalArgumentException("Total copies must be zero or greater");
+        }
+
+        if (availableCopies == null || availableCopies < 0) {
+            throw new IllegalArgumentException("Available copies must be zero or greater");
+        }
+
+        if (availableCopies > totalCopies) {
+            throw new IllegalArgumentException("Available copies cannot exceed total copies");
+        }
     }
 }

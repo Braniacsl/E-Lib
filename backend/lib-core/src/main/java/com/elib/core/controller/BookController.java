@@ -2,7 +2,9 @@ package com.elib.core.controller;
 
 import com.elib.core.dto.BookRequest;
 import com.elib.core.dto.BookResponse;
+import com.elib.core.dto.StockResponse;
 import com.elib.core.service.BookService;
+import com.elib.core.service.CatalogSearchService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -16,17 +18,17 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.elib.core.dto.StockResponse;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/v1/books")
+@RequestMapping("/api/v1/books")
 @RequiredArgsConstructor
 @Tag(name = "Books", description = "Book management endpoints")
 public class BookController {
 
     private final BookService bookService;
+    private final CatalogSearchService catalogSearchService;
 
     @PostMapping
     @Operation(summary = "Create a new book")
@@ -91,39 +93,15 @@ public class BookController {
     public ResponseEntity<Page<BookResponse>> searchBooks(
             @RequestParam String query,
             @PageableDefault(size = 20) Pageable pageable) {
-        Page<BookResponse> response = bookService.searchBooks(query, pageable);
+        Page<BookResponse> response = catalogSearchService.searchBooks(query, pageable);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/categories")
     @Operation(summary = "Get all distinct book categories")
     public ResponseEntity<List<String>> getAllCategories() {
-        List<String> categories = bookService.getAllCategories();
+        List<String> categories = catalogSearchService.getAllCategories();
         return ResponseEntity.ok(categories);
-    }
-
-    @PostMapping("/{id}/borrow")
-    @Operation(summary = "Borrow a book")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Book borrowed successfully"),
-            @ApiResponse(responseCode = "404", description = "Book not found"),
-            @ApiResponse(responseCode = "409", description = "No copies available")
-    })
-    public ResponseEntity<BookResponse> borrowBook(@PathVariable Long id) {
-        BookResponse response = bookService.borrowBook(id);
-        return ResponseEntity.ok(response);
-    }
-
-    @PostMapping("/{id}/return")
-    @Operation(summary = "Return a borrowed book")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Book returned successfully"),
-            @ApiResponse(responseCode = "404", description = "Book not found"),
-            @ApiResponse(responseCode = "409", description = "All copies already available")
-    })
-    public ResponseEntity<BookResponse> returnBook(@PathVariable Long id) {
-        BookResponse response = bookService.returnBook(id);
-        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}/availability")
@@ -144,6 +122,30 @@ public class BookController {
     @Operation(summary = "Increment book stock")
     public ResponseEntity<StockResponse> incrementStock(@PathVariable Long id) {
         StockResponse response = bookService.incrementStock(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{id}/borrow")
+    @Operation(summary = "Borrow a book")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Book borrowed successfully"),
+            @ApiResponse(responseCode = "404", description = "Book not found"),
+            @ApiResponse(responseCode = "409", description = "No copies available or book not active")
+    })
+    public ResponseEntity<BookResponse> borrowBook(@PathVariable Long id) {
+        BookResponse response = bookService.borrowBook(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{id}/return")
+    @Operation(summary = "Return a borrowed book")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Book returned successfully"),
+            @ApiResponse(responseCode = "404", description = "Book not found"),
+            @ApiResponse(responseCode = "409", description = "All copies already available or book not active")
+    })
+    public ResponseEntity<BookResponse> returnBook(@PathVariable Long id) {
+        BookResponse response = bookService.returnBook(id);
         return ResponseEntity.ok(response);
     }
 }
