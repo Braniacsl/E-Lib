@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../axios.ts';
-import { Book, PaginatedResponse } from '../types/types.ts';
+import type { Book, PaginatedResponse } from '../types/types.ts';
 
 export const useBooks = (page = 0, size = 10) => {
   return useQuery({

@@ -16,20 +16,28 @@ public interface BookRepository extends JpaRepository<Book, Long> {
 
     Optional<Book> findByIsbn(String isbn);
 
-    Page<Book> findByTitleContainingIgnoreCase(String title, Pageable pageable);
+    Optional<Book> findByIdAndIsActiveTrue(Long id);
 
-    Page<Book> findByAuthorContainingIgnoreCase(String author, Pageable pageable);
+    Page<Book> findByIsActiveTrue(Pageable pageable);
 
-    Page<Book> findByCategory(String category, Pageable pageable);
+    Page<Book> findByTitleContainingIgnoreCaseAndIsActiveTrue(String title, Pageable pageable);
 
-    List<Book> findByAvailableCopiesGreaterThan(Integer copies);
+    Page<Book> findByAuthorContainingIgnoreCaseAndIsActiveTrue(String author, Pageable pageable);
 
-    @Query("SELECT b FROM Book b WHERE " +
-           "LOWER(b.title) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-           "LOWER(b.author) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-           "LOWER(b.isbn) LIKE LOWER(CONCAT('%', :query, '%'))")
+    Page<Book> findByCategoryIgnoreCaseAndIsActiveTrue(String category, Pageable pageable);
+
+    List<Book> findByAvailableCopiesGreaterThanAndIsActiveTrue(Integer copies);
+
+    @Query("""
+           SELECT b FROM Book b
+           WHERE b.isActive = true AND (
+               LOWER(b.title) LIKE LOWER(CONCAT('%', :query, '%')) OR
+               LOWER(b.author) LIKE LOWER(CONCAT('%', :query, '%')) OR
+               LOWER(b.isbn) LIKE LOWER(CONCAT('%', :query, '%'))
+           )
+           """)
     Page<Book> searchBooks(@Param("query") String query, Pageable pageable);
 
-    @Query("SELECT DISTINCT b.category FROM Book b WHERE b.isActive = true")
+    @Query("SELECT DISTINCT b.category FROM Book b WHERE b.isActive = true ORDER BY b.category ASC")
     List<String> findAllDistinctCategories();
 }
