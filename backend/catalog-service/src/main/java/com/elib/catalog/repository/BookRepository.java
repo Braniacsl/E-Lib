@@ -1,6 +1,6 @@
-package com.elib.core.repository;
+package com.elib.catalog.repository;
 
-import entity.catalog.Book;
+import com.elib.catalog.entity.Book;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
