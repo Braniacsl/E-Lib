@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/books")
+@RequestMapping("/api/v1/books") // ⚠️ check context-path later
 @RequiredArgsConstructor
 @Tag(name = "Books", description = "Book management endpoints")
 public class BookController {
@@ -32,11 +32,6 @@ public class BookController {
 
     @PostMapping
     @Operation(summary = "Create a new book")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Book created successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid input"),
-            @ApiResponse(responseCode = "409", description = "Book with ISBN already exists")
-    })
     public ResponseEntity<BookResponse> createBook(@Valid @RequestBody BookRequest request) {
         BookResponse response = bookService.createBook(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -44,10 +39,6 @@ public class BookController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get book by ID")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Book found"),
-            @ApiResponse(responseCode = "404", description = "Book not found")
-    })
     public ResponseEntity<BookResponse> getBookById(@PathVariable Long id) {
         BookResponse response = bookService.getBookById(id);
         return ResponseEntity.ok(response);
@@ -64,12 +55,6 @@ public class BookController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Update book by ID")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Book updated successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid input"),
-            @ApiResponse(responseCode = "404", description = "Book not found"),
-            @ApiResponse(responseCode = "409", description = "Book with ISBN already exists")
-    })
     public ResponseEntity<BookResponse> updateBook(
             @PathVariable Long id,
             @Valid @RequestBody BookRequest request) {
@@ -79,10 +64,6 @@ public class BookController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete book by ID (soft delete)")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Book deleted successfully"),
-            @ApiResponse(responseCode = "404", description = "Book not found")
-    })
     public ResponseEntity<Void> deleteBook(@PathVariable Long id) {
         bookService.deleteBook(id);
         return ResponseEntity.noContent().build();
@@ -122,30 +103,6 @@ public class BookController {
     @Operation(summary = "Increment book stock")
     public ResponseEntity<StockResponse> incrementStock(@PathVariable Long id) {
         StockResponse response = bookService.incrementStock(id);
-        return ResponseEntity.ok(response);
-    }
-
-    @PostMapping("/{id}/borrow")
-    @Operation(summary = "Borrow a book")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Book borrowed successfully"),
-            @ApiResponse(responseCode = "404", description = "Book not found"),
-            @ApiResponse(responseCode = "409", description = "No copies available or book not active")
-    })
-    public ResponseEntity<BookResponse> borrowBook(@PathVariable Long id) {
-        BookResponse response = bookService.borrowBook(id);
-        return ResponseEntity.ok(response);
-    }
-
-    @PostMapping("/{id}/return")
-    @Operation(summary = "Return a borrowed book")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Book returned successfully"),
-            @ApiResponse(responseCode = "404", description = "Book not found"),
-            @ApiResponse(responseCode = "409", description = "All copies already available or book not active")
-    })
-    public ResponseEntity<BookResponse> returnBook(@PathVariable Long id) {
-        BookResponse response = bookService.returnBook(id);
         return ResponseEntity.ok(response);
     }
 }

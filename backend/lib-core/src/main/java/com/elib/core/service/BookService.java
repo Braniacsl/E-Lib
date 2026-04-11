@@ -67,13 +67,13 @@ public class BookService {
                     });
         }
 
-        validateCopies(request.totalCopies(), book.getAvailableCopies());
-
         bookMapper.updateEntityFromRequest(request, book);
 
         if (book.getAvailableCopies() > book.getTotalCopies()) {
             book.setAvailableCopies(book.getTotalCopies());
         }
+
+        validateCopies(book.getTotalCopies(), book.getAvailableCopies());
 
         Book updatedBook = bookRepository.save(book);
 
@@ -101,9 +101,8 @@ public class BookService {
 
         return new StockResponse(
                 book.getId(),
-                book.getAvailableCopies(),
-                book.getTotalCopies(),
-                book.getAvailableCopies() > 0
+                book.getAvailableCopies() > 0,
+                book.getAvailableCopies()
         );
     }
 
@@ -119,11 +118,13 @@ public class BookService {
         book.setAvailableCopies(book.getAvailableCopies() - 1);
         Book updatedBook = bookRepository.save(book);
 
+        log.info("Decremented stock for book ID: {}, available copies now: {}",
+                bookId, updatedBook.getAvailableCopies());
+
         return new StockResponse(
                 updatedBook.getId(),
-                updatedBook.getAvailableCopies(),
-                updatedBook.getTotalCopies(),
-                updatedBook.getAvailableCopies() > 0
+                updatedBook.getAvailableCopies() > 0,
+                updatedBook.getAvailableCopies()
         );
     }
 
@@ -139,60 +140,14 @@ public class BookService {
         book.setAvailableCopies(book.getAvailableCopies() + 1);
         Book updatedBook = bookRepository.save(book);
 
+        log.info("Incremented stock for book ID: {}, available copies now: {}",
+                bookId, updatedBook.getAvailableCopies());
+
         return new StockResponse(
                 updatedBook.getId(),
-                updatedBook.getAvailableCopies(),
-                updatedBook.getTotalCopies(),
-                updatedBook.getAvailableCopies() > 0
+                updatedBook.getAvailableCopies() > 0,
+                updatedBook.getAvailableCopies()
         );
-    }
-
-    @Transactional
-    public BookResponse borrowBook(Long bookId) {
-        log.info("Borrowing book with ID: {}", bookId);
-
-        Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
-
-        if (!Boolean.TRUE.equals(book.getIsActive())) {
-            throw new IllegalStateException("Cannot borrow an inactive book");
-        }
-
-        if (book.getAvailableCopies() <= 0) {
-            throw new IllegalStateException("No copies available for book ID: " + bookId);
-        }
-
-        book.setAvailableCopies(book.getAvailableCopies() - 1);
-        Book updatedBook = bookRepository.save(book);
-
-        log.info("Book borrowed successfully with ID: {}, available copies now: {}",
-                bookId, updatedBook.getAvailableCopies());
-
-        return bookMapper.toResponse(updatedBook);
-    }
-
-    @Transactional
-    public BookResponse returnBook(Long bookId) {
-        log.info("Returning book with ID: {}", bookId);
-
-        Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new ResourceNotFoundException("Book not found with ID: " + bookId));
-
-        if (!Boolean.TRUE.equals(book.getIsActive())) {
-            throw new IllegalStateException("Cannot return an inactive book");
-        }
-
-        if (book.getAvailableCopies() >= book.getTotalCopies()) {
-            throw new IllegalStateException("All copies are already available for book ID: " + bookId);
-        }
-
-        book.setAvailableCopies(book.getAvailableCopies() + 1);
-        Book updatedBook = bookRepository.save(book);
-
-        log.info("Book returned successfully with ID: {}, available copies now: {}",
-                bookId, updatedBook.getAvailableCopies());
-
-        return bookMapper.toResponse(updatedBook);
     }
 
     private void validateCopies(Integer totalCopies, Integer availableCopies) {
