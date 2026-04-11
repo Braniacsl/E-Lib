@@ -1,8 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="All Backend Services" type="CompoundRunConfigurationType">
-    <toRun name="Run Core" type="MavenRunConfiguration" />
-    <toRun name="Run Gateway" type="MavenRunConfiguration" />
-    <toRun name="Run Notifications" type="MavenRunConfiguration" />
-    <method v="2" />
-  </configuration>
-</component>

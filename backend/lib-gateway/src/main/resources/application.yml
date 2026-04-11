@@ -4,52 +4,64 @@ server:
 spring:
   application:
     name: lib-gateway
+  config:
+    import: optional:configserver:http://localhost:8888
   cloud:
     gateway:
       routes:
-        - id: auth-service
-          uri: http://localhost:8080
+        - id: identity-auth
+          uri: lb://identity-service
           predicates:
             - Path=/api/v1/auth/**
-          filters:
-            - StripPrefix=1
 
-        - id: books-service
-          uri: http://localhost:8080
-          predicates:
-            - Path=/api/v1/books/**
-          filters:
-            - StripPrefix=1
-            - name: JwtAuthenticationFilter
-
-        - id: users-service
-          uri: http://localhost:8080
+        - id: identity-users
+          uri: lb://identity-service
           predicates:
             - Path=/api/v1/users/**
           filters:
-            - StripPrefix=1
+            - name: JwtAuthenticationFilter
+
+        - id: catalog-service
+          uri: lb://catalog-service
+          predicates:
+            - Path=/api/v1/books/**
+          filters:
+            - name: JwtAuthenticationFilter
+
+        - id: borrowing-service
+          uri: lb://borrowing-service
+          predicates:
+            - Path=/api/v1/loans/**
+          filters:
             - name: JwtAuthenticationFilter
 
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials
 
-  cors:
-    allowed-origins:
-      - "http://localhost:3000"
-      - "http://localhost:8080"
-    allowed-methods:
-      - GET
-      - POST
-      - PUT
-      - DELETE
-      - OPTIONS
-    allowed-headers:
-      - "*"
-    allow-credentials: true
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:3000"
+              - "http://localhost:8081"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
 
 jwt:
-  secret: ${JWT_SECRET:your-secret-key-here-change-in-production}
+  secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
   expiration: 3600000
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
 
 management:
   endpoints:

@@ -68,12 +68,10 @@
             ];
 
             buildInputs = [
-              myIntellij
               # Optional: CLI tools for when you aren't using the IDE
               pkgs.docker
               pkgs.docker-compose
               pkgs.postgresql
-              pkgs.steam-run
             ];
 
             shellHook = ''
@@ -94,6 +92,15 @@
                             ]
                           )
                         }:$NIX_LD_LIBRARY_PATH"
+
+              # Claude Code + engram
+              export npm_config_prefix="$HOME/.npm-global"
+              export PATH="$HOME/.npm-global/bin:$PWD/.engram:$PATH"
+              mkdir -p "$HOME/.npm-global"
+
+              if ! command -v claude &> /dev/null; then
+                npm install -g @anthropic-ai/claude-code
+              fi
 
               echo "Full Stack E-Library Environment Loaded"
               echo "----------------------------------------"
