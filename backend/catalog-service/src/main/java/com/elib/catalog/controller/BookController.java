@@ -20,7 +20,7 @@ import org.springframework.http.ResponseEntity;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/books") // ⚠️ check context-path later
+@RequestMapping("/v1/books") // ⚠️ check context-path later
 @RequiredArgsConstructor
 @Tag(name = "Books", description = "Book management endpoints")
 public class BookController {
