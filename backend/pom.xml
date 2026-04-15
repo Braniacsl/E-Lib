@@ -22,6 +22,8 @@
 		<module>eureka-server</module>
 		<module>config-server</module>
 		<module>identity-service</module>
+		<module>catalog-service</module>
+		<module>borrowing-service</module>
 	</modules>
 
 	<properties>
