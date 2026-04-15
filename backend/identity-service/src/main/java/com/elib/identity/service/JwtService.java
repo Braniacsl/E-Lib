@@ -12,6 +12,7 @@ import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -83,12 +84,13 @@ public class JwtService {
         }
     }
 
-    public String generateAccessToken(UserDetails userDetails) {
+    public String generateAccessToken(UserDetails userDetails, UUID userId) {
         Map<String, Object> claims = new HashMap<>();
         String roles = userDetails.getAuthorities().stream()
             .map(GrantedAuthority::getAuthority)
             .collect(Collectors.joining(","));
         claims.put("roles", roles);
+        claims.put("userId", userId.toString());
         return createToken(claims, userDetails.getUsername(),
             accessTokenExpiration);
     }

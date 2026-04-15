@@ -1,6 +1,6 @@
 spring:
   application:
-    name: notification-service
+    name: lib-notifications
   config:
     import: optional:configserver:http://localhost:8888
 

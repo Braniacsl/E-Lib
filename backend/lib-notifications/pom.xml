@@ -10,7 +10,7 @@
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>lib-notification</artifactId>
+    <artifactId>lib-notifications</artifactId>
 
     <dependencies>
         <dependency>

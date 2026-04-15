@@ -17,8 +17,7 @@
 
 	<modules>
 		<module>lib-gateway</module>
-		<module>lib-core</module>
-		<module>lib-notifications</module>
+<module>lib-notifications</module>
 		<module>eureka-server</module>
 		<module>config-server</module>
 		<module>identity-service</module>

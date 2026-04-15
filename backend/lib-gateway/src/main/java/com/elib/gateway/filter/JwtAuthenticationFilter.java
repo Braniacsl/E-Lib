@@ -38,11 +38,14 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
             try {
                 Claims claims = validateToken(token);
 
+                String userId = claims.get("userId", String.class);
+                String email = claims.getSubject();
+
                 ServerWebExchange mutatedExchange = exchange.mutate()
                         .request(builder -> builder
-                                .header("X-User-Id", claims.getSubject())
+                                .header("X-User-Id", userId != null ? userId : email)
                                 .header("X-User-Roles", claims.get("roles", String.class))
-                                .header("X-User-Email", claims.getSubject())
+                                .header("X-User-Email", email)
                         )
                         .build();
 

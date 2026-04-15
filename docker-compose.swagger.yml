@@ -115,6 +115,42 @@ services:
       rabbitmq:
         condition: service_started
 
+  gateway:
+    image: eclipse-temurin:21-jre-alpine
+    volumes:
+      - ./backend/lib-gateway/target:/app
+    command: java -jar /app/lib-gateway-1.0.0-SNAPSHOT.jar
+    environment:
+      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
+      JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+    ports:
+      - "8081:8081"
+    networks: [elib]
+    depends_on:
+      eureka:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+
+  notifications:
+    image: eclipse-temurin:21-jre-alpine
+    volumes:
+      - ./backend/lib-notifications/target:/app
+    command: java -jar /app/lib-notifications-1.0.0-SNAPSHOT.jar
+    environment:
+      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
+      RABBITMQ_HOST: rabbitmq
+    ports:
+      - "8082:8082"
+    networks: [elib]
+    depends_on:
+      config-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+
 networks:
   elib:
     driver: bridge
