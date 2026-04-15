@@ -3,6 +3,7 @@
     <toRun name="Run Core" type="MavenRunConfiguration" />
     <toRun name="Run Gateway" type="MavenRunConfiguration" />
     <toRun name="Run Notifications" type="MavenRunConfiguration" />
+    <toRun name="Run Borrowing" type="MavenRunConfiguration" />
     <method v="2" />
   </configuration>
 </component>

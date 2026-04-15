@@ -9,7 +9,6 @@
     </option>
     <option name="ignoredFiles">
       <set>
-        <option value="$PROJECT_DIR$/backend/borrowing-service/pom.xml" />
         <option value="$PROJECT_DIR$/backend/lib-loan/pom.xml" />
         <option value="$PROJECT_DIR$/backend/lib-loancontext/pom.xml" />
         <option value="$PROJECT_DIR$/backend/lib-loans/pom.xml" />

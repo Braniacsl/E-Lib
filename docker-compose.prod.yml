@@ -61,6 +61,27 @@ services:
     ports:
       - "8082:8082"
 
+  borrowing:
+    build:
+      context: ./backend
+      target: borrowing
+    restart: always
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/elib_db
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_RABBITMQ_HOST: rabbitmq
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://gateway:8761/eureka
+    depends_on:
+      - postgres
+      - rabbitmq
+      - gateway
+    networks:
+      - app-network
+    ports:
+      - "8085:8085"
+
   frontend:
     build: ./frontend
     restart: always
