@@ -1,0 +1,123 @@
+services:
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./backend/docker/init-databases.sql:/docker-entrypoint-initdb.d/init.sql
+      - elib_swagger_pg:/var/lib/postgresql/data
+    networks: [elib]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    networks: [elib]
+
+  eureka:
+    image: eclipse-temurin:21-jre-alpine
+    volumes:
+      - ./backend/eureka-server/target:/app
+    command: java -jar /app/eureka-server-1.0.0-SNAPSHOT.jar
+    ports:
+      - "8761:8761"
+    networks: [elib]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8761/actuator/health 2>/dev/null | grep -q UP || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  config-server:
+    image: eclipse-temurin:21-jre-alpine
+    volumes:
+      - ./backend/config-server/target:/app
+    command: java -jar /app/config-server-1.0.0-SNAPSHOT.jar
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
+    ports:
+      - "8888:8888"
+    networks: [elib]
+    depends_on:
+      eureka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8888/actuator/health 2>/dev/null | grep -q UP || wget -qO- http://localhost:8888/config-server/default 2>/dev/null | grep -q propertySources || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  identity:
+    image: eclipse-temurin:21-jre-alpine
+    volumes:
+      - ./backend/identity-service/target:/app
+    command: java -jar /app/identity-service-1.0.0-SNAPSHOT.jar
+    environment:
+      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888"
+      POSTGRES_HOST: postgres
+      POSTGRES_PASSWORD: postgres
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
+      JWT_SECRET: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+    ports:
+      - "8083:8083"
+    networks: [elib]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+
+  catalog:
+    image: eclipse-temurin:21-jre-alpine
+    volumes:
+      - ./backend/catalog-service/target:/app
+    command: java -jar /app/catalog-service-1.0.0-SNAPSHOT.jar
+    environment:
+      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888"
+      POSTGRES_HOST: postgres
+      POSTGRES_PASSWORD: postgres
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
+    ports:
+      - "8084:8084"
+    networks: [elib]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+
+  borrowing:
+    image: eclipse-temurin:21-jre-alpine
+    volumes:
+      - ./backend/borrowing-service/target:/app
+    command: java -jar /app/borrowing-service-1.0.0-SNAPSHOT.jar
+    environment:
+      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888"
+      POSTGRES_HOST: postgres
+      POSTGRES_PASSWORD: postgres
+      RABBITMQ_HOST: rabbitmq
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
+    ports:
+      - "8085:8085"
+    networks: [elib]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+
+networks:
+  elib:
+    driver: bridge
+
+volumes:
+  elib_swagger_pg:

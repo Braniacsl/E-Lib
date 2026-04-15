@@ -140,6 +140,5 @@ secrets.yml
 lancedb/
 
 # Documentation markdown (submitted in Word document, not pushed to repo)
-README.md
 docs/
 backend/borrowing-service/TEST_SCENARIOS.md
