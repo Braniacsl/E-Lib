@@ -73,10 +73,10 @@ mvn -f backend/pom.xml -pl borrowing-service -am test
 Tests use H2 in-memory database and WireMock to stub catalog service calls. Scenarios covered:
 
 - Happy-path borrow flow (stock check, loan creation, RabbitMQ publish)
-- No stock available → 400
-- Maximum active loans (5) reached → 400
-- Double return → 400
-- Circuit breaker: catalog unavailable → 503 fallback, recovery after open-state timeout
+- No stock available -> 400
+- Maximum active loans (5) reached-> 400
+- Double return -> 400
+- Circuit breaker: catalog unavailable -> 503 fallback, recovery after open-state timeout
 
 See `backend/borrowing-service/TEST_SCENARIOS.md` for full scenario descriptions.
 
