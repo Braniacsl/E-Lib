@@ -19,6 +19,7 @@
 		<module>lib-gateway</module>
 		<module>lib-core</module>
 		<module>lib-notifications</module>
+		<module>borrowing-service</module>
 	</modules>
 
 	<properties>

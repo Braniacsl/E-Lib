@@ -3,7 +3,7 @@ services:
     image: mcr.microsoft.com/devcontainers/base:ubuntu
     volumes:
       - .:/workspace:cached
-      - /run/user/1000/docker.sock:/var/run/docker.sock
+      - //./pipe/docker_engine/var/run/docker.sock
     command: sleep infinity
     networks:
       - app-network
