@@ -1,0 +1,40 @@
+spring:
+  config:
+    import: ""
+  datasource:
+    url: jdbc:h2:mem:borrowdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+  flyway:
+    enabled: false
+  cloud:
+    discovery:
+      enabled: true
+    openfeign:
+      circuitbreaker:
+        enabled: true
+
+eureka:
+  client:
+    enabled: false
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      catalog-service:
+        sliding-window-size: 2
+        minimum-number-of-calls: 1
+        failure-rate-threshold: 1
+        wait-duration-in-open-state: 1s
+        permitted-number-of-calls-in-half-open-state: 1
+  timelimiter:
+    instances:
+      catalog-service:
+        timeout-duration: 1s
