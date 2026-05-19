@@ -1,44 +1,158 @@
 services:
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./backend/docker/init-databases.sql:/docker-entrypoint-initdb.d/init.sql
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - elib
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
+    networks:
+      - elib
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  eureka:
+    build:
+      context: ./backend
+      target: eureka
+    restart: always
+    ports:
+      - "8761:8761"
+    networks:
+      - elib
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8761/actuator/health 2>/dev/null | grep -q UP || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  config-server:
+    build:
+      context: ./backend
+      target: config
+    restart: always
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
+    ports:
+      - "8888:8888"
+    networks:
+      - elib
+    depends_on:
+      eureka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8888/actuator/health 2>/dev/null | grep -q UP || wget -qO- http://localhost:8888/config-server/default 2>/dev/null | grep -q propertySources || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  identity:
+    build:
+      context: ./backend
+      target: identity
+    restart: always
+    environment:
+      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888"
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "8083:8083"
+    networks:
+      - elib
+    depends_on:
+      postgres:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+
+  catalog:
+    build:
+      context: ./backend
+      target: catalog
+    restart: always
+    environment:
+      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888"
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
+    ports:
+      - "8084:8084"
+    networks:
+      - elib
+    depends_on:
+      postgres:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+
+  borrowing:
+    build:
+      context: ./backend
+      target: borrowing
+    restart: always
+    environment:
+      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888"
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_PASS: ${RABBITMQ_PASS:-guest}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
+    ports:
+      - "8085:8085"
+    networks:
+      - elib
+    depends_on:
+      postgres:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
   gateway:
     build:
       context: ./backend
       target: gateway
     restart: always
     environment:
-      SPRING_PROFILES_ACTIVE: prod
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/elib_db
-      SPRING_DATASOURCE_USERNAME: user
-      SPRING_DATASOURCE_PASSWORD: password
-      SPRING_RABBITMQ_HOST: rabbitmq
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://gateway:8761/eureka
-    depends_on:
-      - postgres
-      - rabbitmq
-    networks:
-      - app-network
-    ports:
-      - "8080:8080"
-
-  core:
-    build:
-      context: ./backend
-      target: core
-    restart: always
-    environment:
-      SPRING_PROFILES_ACTIVE: prod
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/elib_db
-      SPRING_DATASOURCE_USERNAME: user
-      SPRING_DATASOURCE_PASSWORD: password
-      SPRING_RABBITMQ_HOST: rabbitmq
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://gateway:8761/eureka
-    depends_on:
-      - postgres
-      - rabbitmq
-      - gateway
-    networks:
-      - app-network
+      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
+      JWT_SECRET: ${JWT_SECRET}
     ports:
       - "8081:8081"
+    networks:
+      - elib
+    depends_on:
+      eureka:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
 
   notifications:
     build:
@@ -46,20 +160,24 @@ services:
       target: notifications
     restart: always
     environment:
-      SPRING_PROFILES_ACTIVE: prod
-      SPRING_RABBITMQ_HOST: rabbitmq
-      SPRING_MAIL_HOST: smtp.gmail.com
-      SPRING_MAIL_PORT: 587
-      SPRING_MAIL_USERNAME: ${MAIL_USERNAME}
-      SPRING_MAIL_PASSWORD: ${MAIL_PASSWORD}
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://gateway:8761/eureka
-    depends_on:
-      - rabbitmq
-      - gateway
-    networks:
-      - app-network
+      SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888"
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_PASS: ${RABBITMQ_PASS:-guest}
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
     ports:
       - "8082:8082"
+    networks:
+      - elib
+    depends_on:
+      config-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
 
   frontend:
     build: ./frontend
@@ -67,6 +185,13 @@ services:
     depends_on:
       - gateway
     networks:
-      - app-network
+      - elib
     ports:
-      - "80:80"
+      - "8080:80"
+
+networks:
+  elib:
+    driver: bridge
+
+volumes:
+  pgdata:

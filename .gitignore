@@ -142,3 +142,5 @@ lancedb/
 # Documentation markdown (submitted in Word document, not pushed to repo)
 docs/
 backend/borrowing-service/TEST_SCENARIOS.md
+AGENTS.md
+assingment_templates/

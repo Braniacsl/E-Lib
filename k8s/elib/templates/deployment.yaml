@@ -1,0 +1,126 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: {{ .Values.postgres.image }}
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: elib-config
+                  key: postgres-user
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: elib-secrets
+                  key: postgres-password
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: pgdata
+              mountPath: /var/lib/postgresql/data
+          readinessProbe:
+            tcpSocket:
+              port: 5432
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: pgdata
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+        - name: rabbitmq
+          image: {{ .Values.rabbitmq.image }}
+          env:
+            - name: RABBITMQ_DEFAULT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: elib-secrets
+                  key: rabbitmq-user
+            - name: RABBITMQ_DEFAULT_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: elib-secrets
+                  key: rabbitmq-pass
+          ports:
+            - containerPort: 5672
+          readinessProbe:
+            tcpSocket:
+              port: 5672
+            initialDelaySeconds: 10
+            periodSeconds: 10
+{{- range $name, $svc := .Values.services }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+spec:
+  replicas: {{ $.Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $name }}
+    spec:
+      containers:
+        - name: {{ $name }}
+          image: {{ $svc.image.registry | default $.Values.image.registry }}/{{ $svc.image.repository | default (printf "%s-%s" $.Values.image.repository $name) }}:{{ $svc.image.tag | default $.Values.image.tag }}
+          imagePullPolicy: {{ $.Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ $svc.port }}
+          {{- if $svc.env }}
+          env:
+            {{- range $ek, $ev := $svc.env }}
+            - name: {{ $ek }}
+              value: {{ $ev | quote }}
+            {{- end }}
+          {{- end }}
+          envFrom:
+            - secretRef:
+                name: elib-secrets
+          {{- if $svc.healthcheck }}
+          readinessProbe:
+            httpGet:
+              path: {{ $svc.healthcheck.path }}
+              port: {{ $svc.port }}
+            initialDelaySeconds: {{ $svc.healthcheck.initialDelaySeconds }}
+            periodSeconds: {{ $svc.healthcheck.periodSeconds }}
+          livenessProbe:
+            httpGet:
+              path: {{ $svc.healthcheck.path }}
+              port: {{ $svc.port }}
+            initialDelaySeconds: {{ add $svc.healthcheck.initialDelaySeconds 30 }}
+            periodSeconds: {{ $svc.healthcheck.periodSeconds }}
+          {{- end }}
+{{- end }}

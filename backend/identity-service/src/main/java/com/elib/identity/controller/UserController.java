@@ -151,4 +151,13 @@ public class UserController {
             userService.removeRoleFromUser(id, role);
         return ResponseEntity.ok(response);
     }
+
+    @PutMapping("/{id}/active")
+    @Operation(summary = "Set user active status")
+    public ResponseEntity<UserResponse> setActive(
+            @PathVariable UUID id,
+            @RequestBody boolean active) {
+        UserResponse response = userService.setActive(id, active);
+        return ResponseEntity.ok(response);
+    }
 }

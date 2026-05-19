@@ -3,7 +3,11 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
-  role: 'USER' | 'ADMIN';
+  username: string;
+  phoneNumber: string;
+  address: string;
+  roles: string[];
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -13,10 +17,16 @@ export interface Book {
   title: string;
   author: string;
   isbn: string;
+  description?: string;
   publicationYear: number;
   publisher: string;
+  category?: string;
+  language?: string;
+  pageCount?: number;
+  coverImageUrl?: string;
   availableCopies: number;
   totalCopies: number;
+  isActive?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -25,9 +35,9 @@ export interface Loan {
   id: string;
   userId: string;
   bookId: string;
-  borrowedAt: string;
+  borrowDate: string;
   dueDate: string;
-  returnedAt: string | null;
+  returnDate: string | null;
   status: 'ACTIVE' | 'RETURNED' | 'OVERDUE';
 }
 

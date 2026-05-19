@@ -21,6 +21,24 @@ spring:
           filters:
             - name: JwtAuthenticationFilter
 
+        - id: catalog-public
+          uri: lb://catalog-service
+          predicates:
+            - Path=/api/v1/books
+            - Method=GET
+
+        - id: catalog-search
+          uri: lb://catalog-service
+          predicates:
+            - Path=/api/v1/books/search
+            - Method=GET
+
+        - id: catalog-categories
+          uri: lb://catalog-service
+          predicates:
+            - Path=/api/v1/books/categories
+            - Method=GET
+
         - id: catalog-service
           uri: lb://catalog-service
           predicates:
@@ -43,7 +61,8 @@ spring:
           '[/**]':
             allowedOrigins:
               - "http://localhost:3000"
-              - "http://localhost:8081"
+              - "http://localhost:5173"
+              - "http://localhost:8080"
             allowedMethods:
               - GET
               - POST

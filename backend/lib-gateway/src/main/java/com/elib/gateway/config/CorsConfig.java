@@ -16,6 +16,7 @@ public class CorsConfig {
         CorsConfiguration corsConfig = new CorsConfiguration();
         corsConfig.setAllowedOrigins(Arrays.asList(
                 "http://localhost:3000",
+                "http://localhost:5173",
                 "http://localhost:8080"
         ));
         corsConfig.setMaxAge(3600L);

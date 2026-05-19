@@ -50,9 +50,14 @@ public class BookService {
     }
 
     @Transactional(readOnly = true)
-    public Page<BookResponse> getAllBooks(Pageable pageable) {
-        return bookRepository.findByIsActiveTrue(pageable)
-                .map(bookMapper::toResponse);
+    public Page<BookResponse> getAllBooks(Pageable pageable, String category) {
+        Page<Book> books;
+        if (category != null && !category.isBlank()) {
+            books = bookRepository.findByCategoryIgnoreCaseAndIsActiveTrue(category, pageable);
+        } else {
+            books = bookRepository.findByIsActiveTrue(pageable);
+        }
+        return books.map(bookMapper::toResponse);
     }
 
     @Transactional

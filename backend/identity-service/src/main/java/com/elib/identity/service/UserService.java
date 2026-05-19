@@ -144,4 +144,14 @@ public class UserService {
         User updatedUser = userRepository.save(user);
         return userMapper.toResponse(updatedUser);
     }
+
+    @Transactional
+    public UserResponse setActive(UUID id, boolean active) {
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException(
+                "User not found with ID: " + id));
+        user.setIsActive(active);
+        User updatedUser = userRepository.save(user);
+        return userMapper.toResponse(updatedUser);
+    }
 }

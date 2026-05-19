@@ -1,0 +1,124 @@
+replicaCount: 1
+
+image:
+  registry: docker.io
+  repository: elib
+  tag: latest
+  pullPolicy: Always
+
+postgres:
+  image: postgres:15-alpine
+  storage: 1Gi
+  user: postgres
+
+rabbitmq:
+  image: rabbitmq:3-management-alpine
+
+services:
+  eureka:
+    port: 8761
+    env: {}
+    healthcheck:
+      path: /actuator/health
+      initialDelaySeconds: 30
+      periodSeconds: 10
+
+  config-server:
+    port: 8888
+    env:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
+    dependsOn:
+      - eureka
+    healthcheck:
+      path: /actuator/health
+      initialDelaySeconds: 40
+      periodSeconds: 10
+
+  identity:
+    port: 8083
+    env:
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      POSTGRES_HOST: postgres
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
+    dependsOn:
+      - postgres
+      - config-server
+    healthcheck:
+      path: /actuator/health
+      initialDelaySeconds: 50
+      periodSeconds: 10
+
+  catalog:
+    port: 8084
+    env:
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      POSTGRES_HOST: postgres
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
+    dependsOn:
+      - postgres
+      - config-server
+    healthcheck:
+      path: /actuator/health
+      initialDelaySeconds: 50
+      periodSeconds: 10
+
+  borrowing:
+    port: 8085
+    env:
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      POSTGRES_HOST: postgres
+      RABBITMQ_HOST: rabbitmq
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
+    dependsOn:
+      - postgres
+      - config-server
+      - rabbitmq
+    healthcheck:
+      path: /actuator/health
+      initialDelaySeconds: 50
+      periodSeconds: 10
+
+  gateway:
+    port: 8081
+    env:
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
+    dependsOn:
+      - eureka
+      - config-server
+    healthcheck:
+      path: /actuator/health
+      initialDelaySeconds: 50
+      periodSeconds: 10
+
+  notifications:
+    port: 8082
+    env:
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka
+      RABBITMQ_HOST: rabbitmq
+    dependsOn:
+      - config-server
+      - rabbitmq
+    healthcheck:
+      path: /actuator/health
+      initialDelaySeconds: 50
+      periodSeconds: 10
+
+  frontend:
+    port: 80
+    env: {}
+    dependsOn:
+      - gateway
+    image:
+      registry: docker.io
+      repository: elib-frontend
+      tag: latest
+    healthcheck:
+      path: /
+      initialDelaySeconds: 10
+      periodSeconds: 10
+
+ingress:
+  enabled: true
+  host: elib.example.com

@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { apiClient } from '../axios.ts';
 
 interface LoginCredentials {
-  email: string;
+  emailOrUsername: string;
   password: string;
 }
 
@@ -14,7 +14,7 @@ interface AuthResponse {
     email: string;
     firstName: string;
     lastName: string;
-    role: string;
+    roles: string[];
   };
 }
 

@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: elib-config
+data:
+  postgres-user: {{ .Values.postgres.user | quote }}
+  postgres-host: postgres
+  rabbitmq-host: rabbitmq
+  eureka-zone: http://eureka:8761/eureka

@@ -6,7 +6,10 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import BooksPage from './pages/BooksPage';
+import BookDetailPage from './pages/BookDetailPage';
 import ProfilePage from './pages/ProfilePage';
+import LoansPage from './pages/LoansPage';
+import AdminPage from './pages/AdminPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 const App: React.FC = () => {
@@ -18,7 +21,10 @@ const App: React.FC = () => {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/books" element={<BooksPage />} />
+          <Route path="/books/:id" element={<BookDetailPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/loans" element={<LoansPage />} />
+          <Route path="/admin" element={<AdminPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Layout>

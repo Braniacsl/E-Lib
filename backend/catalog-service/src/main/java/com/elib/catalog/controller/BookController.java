@@ -44,11 +44,12 @@ public class BookController {
     }
 
     @GetMapping
-    @Operation(summary = "Get all books with pagination")
+    @Operation(summary = "Get all books with pagination and optional category filter")
     public ResponseEntity<Page<BookResponse>> getAllBooks(
             @Parameter(description = "Pagination parameters")
-            @PageableDefault(size = 20) Pageable pageable) {
-        Page<BookResponse> response = bookService.getAllBooks(pageable);
+            @PageableDefault(size = 20) Pageable pageable,
+            @RequestParam(required = false) String category) {
+        Page<BookResponse> response = bookService.getAllBooks(pageable, category);
         return ResponseEntity.ok(response);
     }
 
